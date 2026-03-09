@@ -8,7 +8,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
-    private const val BASE_URL = "http://127.0.0.1:8080/"
+    // ⚠️ ВАЖНО: 127.0.0.1 работает ТОЛЬКО в эмуляторе!
+    // Для реального устройства используйте IP компьютера в сети: http://192.168.1.106:8080/
+    private const val BASE_URL = "http://10.0.2.2:8080/"  // Для эмулятора Android
+    // private const val BASE_URL = "http://192.168.1.106:8080/"  // Для реального устройства
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -16,6 +19,12 @@ object RetrofitInstance {
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
+        .addInterceptor { chain ->
+            // Добавляем логирование запросов
+            val request = chain.request()
+            println("📤 Request: ${request.method} ${request.url}")
+            chain.proceed(request)
+        }
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
