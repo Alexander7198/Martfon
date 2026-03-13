@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 object RetrofitInstance {
     // ⚠️ ВАЖНО: 127.0.0.1 работает ТОЛЬКО в эмуляторе!
     // Для реального устройства используйте IP компьютера в сети: http://192.168.1.106:8080/
-    private const val BASE_URL = "http://10.0.2.2:8080/"  // Для эмулятора Android
+    private const val BASE_URL = "http://192.168.1.106:8080/"  // Для эмулятора Android
     // private const val BASE_URL = "http://192.168.1.106:8080/"  // Для реального устройства
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {

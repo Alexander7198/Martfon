@@ -27,3 +27,18 @@ data class UserDto(
     @SerializedName("created_at")
     val createdAt: String? = null
 )
+
+// Дополнительный data class для ответа от сервера
+data class StatusResponse(
+    @SerializedName("success")
+    val success: Boolean,
+
+    @SerializedName("status")
+    val status: String
+)
+
+// Для запроса обновления статуса
+data class StatusRequest(
+    @SerializedName("status")
+    val status: String
+)

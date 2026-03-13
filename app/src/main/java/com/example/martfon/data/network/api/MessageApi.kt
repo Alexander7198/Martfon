@@ -5,6 +5,8 @@ import com.example.martfon.data.network.dto.ChatDto
 import com.example.martfon.data.network.dto.UserDto
 import com.example.martfon.data.network.dto.LoginRequest
 import com.example.martfon.data.network.dto.LoginResponse
+import com.example.martfon.data.network.dto.StatusRequest
+import com.example.martfon.data.network.dto.StatusResponse
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -52,4 +54,19 @@ interface MessageApi {
     suspend fun getUsers(
         @Header("Authorization") token: String
     ): Response<List<UserDto>>
+
+    // ===========================================
+    // СТАТУС ПОЛЬЗОВАТЕЛЯ (НОВОЕ!)
+    // ===========================================
+
+    @POST("api/users/status")
+    suspend fun updateStatus(
+        @Header("Authorization") token: String,
+        @Body request: StatusRequest
+    ): Response<StatusResponse>
+
+    @GET("api/users/status/{userId}")
+    suspend fun getUserStatus(
+        @Path("userId") userId: String
+    ): Response<UserDto>
 }

@@ -5,16 +5,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.martfon.data.network.dto.UserDto  // ✅ Добавлен импорт
 import com.example.martfon.domain.model.Message
-import com.example.martfon.presentation.viewmodels.ChatViewModel  // ✅ Исправлен импорт
+import com.example.martfon.presentation.viewmodels.ChatViewModel
+import kotlinx.coroutines.delay  // ✅ Добавлен импорт
+import androidx.compose.foundation.background
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -24,9 +30,12 @@ import java.util.Locale
 fun ChatScreen(
     chatId: String,
     firebaseToken: String,
-    onLogout: () -> Unit,  // ✅ Добавлен параметр для выхода
+    otherUserId: String,
+    onLogout: () -> Unit,
     viewModel: ChatViewModel = viewModel()
 ) {
+    println("🔥🔥🔥🔥🔥 ChatScreen ОТОБРАЗИЛСЯ с токеном: $firebaseToken")
+    println("🔥🔥🔥🔥🔥 otherUserId: $otherUserId")
     // Устанавливаем токен при загрузке экрана
     LaunchedEffect(firebaseToken) {
         viewModel.setAuthToken(firebaseToken)
@@ -44,7 +53,29 @@ fun ChatScreen(
 
     val listState = rememberLazyListState()
 
-    // Автоскролл к последнему сообщению
+    // ===== СТАТУС =====
+    LaunchedEffect(Unit) {
+        println("🚀 Запускаем startStatusUpdates()")
+        viewModel.startStatusUpdates()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            println("💀 Останавливаем статус")
+            viewModel.stopStatusUpdates()
+        }
+    }
+
+    var otherUserStatus by remember { mutableStateOf<UserDto?>(null) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            otherUserStatus = viewModel.getOtherUserStatus(otherUserId)
+            delay(10000)
+        }
+    }
+
+    // Автоскролл
     LaunchedEffect(messages) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(0)
@@ -54,7 +85,38 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Чат") },
+                title = {
+                    Column {
+                        Text("Чат")
+                        otherUserStatus?.let { user ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(top = 2.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (user.status == "online")
+                                                Color.Green
+                                            else
+                                                Color.Gray
+                                        )
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (user.status == "online")
+                                        "online"
+                                    else {
+                                        user.lastSeen?.let { formatLastSeen(it) } ?: "давно"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = onLogout) {
                         Icon(
@@ -133,7 +195,7 @@ fun ChatScreen(
     }
 }
 
-// ⬇️ ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ⬇️
+// ⬇️ MessageBubble и MessageInput остаются без изменений ⬇️
 
 @Composable
 fun MessageBubble(
@@ -154,7 +216,6 @@ fun MessageBubble(
         Alignment.CenterStart
     }
 
-    // Форматирование времени
     val timeText = remember(message.timestamp) {
         try {
             SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp))
@@ -236,5 +297,28 @@ fun MessageInput(
                 }
             )
         }
+    }
+}
+
+// ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ (вынесена из ChatScreen) =====
+fun formatLastSeen(timestamp: String): String {
+    return try {
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val date = format.parse(timestamp)
+        if (date == null) return "давно"  // ✅ Проверка на null
+
+        val diff = System.currentTimeMillis() - date.time
+
+        when {
+            diff < 60000 -> "только что"
+            diff < 3600000 -> "${diff / 60000} мин назад"
+            diff < 86400000 -> "${diff / 3600000} ч назад"
+            else -> {
+                val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+                dateFormat.format(date)
+            }
+        }
+    } catch (e: Exception) {
+        "давно"
     }
 }

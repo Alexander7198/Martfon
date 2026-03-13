@@ -2,8 +2,14 @@ package com.example.martfon.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.martfon.data.network.api.MessageApi
+import com.example.martfon.data.network.dto.StatusRequest
+import com.example.martfon.data.network.dto.UserDto
+import com.example.martfon.data.network.retrofit.RetrofitInstance  // ✅ Добавьте импорт!
 import com.example.martfon.data.repository.MessageRepository
 import com.example.martfon.domain.model.Message
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +19,9 @@ import java.util.*
 
 class ChatViewModel : ViewModel() {
     private val messageRepository = MessageRepository()
+
+    // ✅ ИНИЦИАЛИЗИРУЕМ apiService!
+    private val apiService = RetrofitInstance.messageApi
 
     private var currentChatId: String = "1f57594a-eea1-4a7e-8ff7-258ac90366a8"
     private var authToken: String? = null
@@ -29,6 +38,67 @@ class ChatViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    // ===== СТАТУС =====
+    private var statusUpdateJob: Job? = null
+
+    fun startStatusUpdates() {
+        println("🚀🚀🚀 startStatusUpdates() ВЫЗВАН")
+        statusUpdateJob = viewModelScope.launch {
+            while (true) {
+                println("🔄🔄🔄 Запускаем updateStatus")
+                updateStatus("online")
+                delay(30000)
+            }
+        }
+    }
+
+    fun stopStatusUpdates() {
+        statusUpdateJob?.cancel()
+        viewModelScope.launch {
+            updateStatus("offline")
+        }
+    }
+
+    private suspend fun updateStatus(status: String) {
+        if (authToken == null) {
+            println("❌ authToken == null в updateStatus")
+            return
+        }
+
+        try {
+            println("🟡 Пытаюсь обновить статус на: $status")
+            val response = apiService.updateStatus("Bearer $authToken", StatusRequest(status))
+            if (response.isSuccessful) {
+                println("✅ Статус обновлен: $status")
+            } else {
+                println("❌ Ошибка ответа: ${response.code()} - ${response.message()}")
+            }
+        } catch (e: Exception) {
+            println("❌ Исключение: ${e.message}")
+        }
+    }
+
+    suspend fun getOtherUserStatus(userId: String): UserDto? {
+        return try {
+            println("📡 Запрашиваю статус пользователя: $userId")
+            val response = apiService.getUserStatus(userId)
+            println("📡 Код ответа: ${response.code()}")
+
+            if (response.isSuccessful) {
+                val user = response.body()
+                println("✅ Получен статус: ${user?.status}")
+                user
+            } else {
+                println("❌ Ошибка получения статуса: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            println("❌ Исключение при запросе статуса: ${e.message}")
+            null
+        }
+    }
+
+    // ===== ОСТАЛЬНОЙ КОД =====
     fun setAuthToken(token: String) {
         authToken = token
         messageRepository.setToken(token)
@@ -73,7 +143,6 @@ class ChatViewModel : ViewModel() {
             _isLoading.value = true
             _error.value = null
 
-            // Оптимистичное обновление
             val tempMessage = Message(
                 id = UUID.randomUUID().toString(),
                 text = text,
@@ -87,11 +156,9 @@ class ChatViewModel : ViewModel() {
             try {
                 val result = messageRepository.sendMessage(currentChatId, text)
                 result.onSuccess {
-                    // Сообщение успешно отправлено, обновляем список
                     loadMessages()
                 }.onFailure { exception ->
                     _error.value = exception.message ?: "Ошибка отправки"
-                    // Откатываем оптимистичное обновление при ошибке
                     loadMessages()
                 }
             } catch (e: Exception) {
@@ -113,7 +180,7 @@ class ChatViewModel : ViewModel() {
             text = this.content ?: "",
             senderId = this.sender_firebase_uid ?: "unknown",
             timestamp = parseTimestamp(this.created_at),
-            isSentByMe = this.sender_firebase_uid == "test_user_123" // Сравните с вашим UID
+            isSentByMe = this.sender_firebase_uid == "test_user_123"
         )
     }
 
