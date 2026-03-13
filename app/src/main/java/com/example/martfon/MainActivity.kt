@@ -32,24 +32,15 @@ class MainActivity : ComponentActivity() {
 
                 var isLoggedIn by remember { mutableStateOf(false) }
                 var authToken by remember { mutableStateOf<String?>(null) }
-                var currentUserId by remember { mutableStateOf<String?>(null) }
-                var otherUserId by remember { mutableStateOf<String?>(null) }
 
+                // Проверка авторизации при запуске
                 LaunchedEffect(Unit) {
-                    println("🔍 Запускаем проверку авторизации")
                     userPreferences.isLoggedIn.collect { loggedIn ->
-                        println("📱 userPreferences.isLoggedIn = $loggedIn")
                         isLoggedIn = loggedIn
                         if (loggedIn) {
                             userPreferences.authToken.collect { token ->
-                                println("🔑 Получен токен из preferences: $token")
                                 authToken = token
-                                currentUserId = token
-                                otherUserId = "test_user_123"
-                                println("👤 currentUserId = $currentUserId, otherUserId = $otherUserId")
                             }
-                        } else {
-                            println("❌ Пользователь не авторизован")
                         }
                     }
                 }
@@ -59,30 +50,19 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (!isLoggedIn) {
-                        println("👀 Показываем LoginScreen")
                         LoginScreen(
                             viewModel = loginViewModel,
                             onLoginSuccess = { token ->
-                                println("✅ Успешный вход, получен токен: ${token.substring(0, 10)}...")
                                 authToken = token
                                 isLoggedIn = true
-                                currentUserId = token
-                                otherUserId = "test_user_123"
-                                println("👤 Установлены ID: current=$currentUserId, other=$otherUserId")
                             }
                         )
                     } else {
-                        println("👀👀👀 Показываем ChatScreen")
-                        println("📦 chatId = 1f57594a-eea1-4a7e-8ff7-258ac90366a8")
-                        println("🔑 firebaseToken = ${authToken?.substring(0, 10)}...")
-                        println("👤 otherUserId = $otherUserId")
-
                         ChatScreen(
                             chatId = "1f57594a-eea1-4a7e-8ff7-258ac90366a8",
                             firebaseToken = authToken ?: "",
-                            otherUserId = otherUserId ?: "test_user_123",
+                            otherUserId = "test_user_123",
                             onLogout = {
-                                println("🚪 Выход из аккаунта")
                                 loginViewModel.logout()
                                 isLoggedIn = false
                             }

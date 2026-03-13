@@ -1,4 +1,4 @@
-package com.example.martfon.domain.presentation.screens
+package com.example.martfon.presentation.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -16,10 +16,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.martfon.data.network.dto.UserDto  // ✅ Добавлен импорт
+import com.example.martfon.data.network.dto.UserDto
 import com.example.martfon.domain.model.Message
 import com.example.martfon.presentation.viewmodels.ChatViewModel
-import kotlinx.coroutines.delay  // ✅ Добавлен импорт
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.background
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,8 +34,6 @@ fun ChatScreen(
     onLogout: () -> Unit,
     viewModel: ChatViewModel = viewModel()
 ) {
-    println("🔥🔥🔥🔥🔥 ChatScreen ОТОБРАЗИЛСЯ с токеном: $firebaseToken")
-    println("🔥🔥🔥🔥🔥 otherUserId: $otherUserId")
     // Устанавливаем токен при загрузке экрана
     LaunchedEffect(firebaseToken) {
         viewModel.setAuthToken(firebaseToken)
@@ -55,13 +53,11 @@ fun ChatScreen(
 
     // ===== СТАТУС =====
     LaunchedEffect(Unit) {
-        println("🚀 Запускаем startStatusUpdates()")
         viewModel.startStatusUpdates()
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            println("💀 Останавливаем статус")
             viewModel.stopStatusUpdates()
         }
     }
@@ -300,12 +296,12 @@ fun MessageInput(
     }
 }
 
-// ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ (вынесена из ChatScreen) =====
+// ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ =====
 fun formatLastSeen(timestamp: String): String {
     return try {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         val date = format.parse(timestamp)
-        if (date == null) return "давно"  // ✅ Проверка на null
+        if (date == null) return "давно"
 
         val diff = System.currentTimeMillis() - date.time
 

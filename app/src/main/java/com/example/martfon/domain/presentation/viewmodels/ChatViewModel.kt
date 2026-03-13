@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.martfon.data.network.api.MessageApi
 import com.example.martfon.data.network.dto.StatusRequest
 import com.example.martfon.data.network.dto.UserDto
-import com.example.martfon.data.network.retrofit.RetrofitInstance  // ✅ Добавьте импорт!
+import com.example.martfon.data.network.retrofit.RetrofitInstance
 import com.example.martfon.data.repository.MessageRepository
 import com.example.martfon.domain.model.Message
 import kotlinx.coroutines.Job
@@ -19,8 +19,6 @@ import java.util.*
 
 class ChatViewModel : ViewModel() {
     private val messageRepository = MessageRepository()
-
-    // ✅ ИНИЦИАЛИЗИРУЕМ apiService!
     private val apiService = RetrofitInstance.messageApi
 
     private var currentChatId: String = "1f57594a-eea1-4a7e-8ff7-258ac90366a8"
@@ -42,10 +40,8 @@ class ChatViewModel : ViewModel() {
     private var statusUpdateJob: Job? = null
 
     fun startStatusUpdates() {
-        println("🚀🚀🚀 startStatusUpdates() ВЫЗВАН")
         statusUpdateJob = viewModelScope.launch {
             while (true) {
-                println("🔄🔄🔄 Запускаем updateStatus")
                 updateStatus("online")
                 delay(30000)
             }
@@ -60,40 +56,20 @@ class ChatViewModel : ViewModel() {
     }
 
     private suspend fun updateStatus(status: String) {
-        if (authToken == null) {
-            println("❌ authToken == null в updateStatus")
-            return
-        }
+        if (authToken == null) return
 
         try {
-            println("🟡 Пытаюсь обновить статус на: $status")
-            val response = apiService.updateStatus("Bearer $authToken", StatusRequest(status))
-            if (response.isSuccessful) {
-                println("✅ Статус обновлен: $status")
-            } else {
-                println("❌ Ошибка ответа: ${response.code()} - ${response.message()}")
-            }
+            apiService.updateStatus("Bearer $authToken", StatusRequest(status))
         } catch (e: Exception) {
-            println("❌ Исключение: ${e.message}")
+            // Игнорируем ошибки статуса
         }
     }
 
     suspend fun getOtherUserStatus(userId: String): UserDto? {
         return try {
-            println("📡 Запрашиваю статус пользователя: $userId")
             val response = apiService.getUserStatus(userId)
-            println("📡 Код ответа: ${response.code()}")
-
-            if (response.isSuccessful) {
-                val user = response.body()
-                println("✅ Получен статус: ${user?.status}")
-                user
-            } else {
-                println("❌ Ошибка получения статуса: ${response.code()}")
-                null
-            }
+            if (response.isSuccessful) response.body() else null
         } catch (e: Exception) {
-            println("❌ Исключение при запросе статуса: ${e.message}")
             null
         }
     }
