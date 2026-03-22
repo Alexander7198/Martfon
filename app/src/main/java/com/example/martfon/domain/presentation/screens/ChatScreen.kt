@@ -8,7 +8,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.SwapHoriz  // Добавьте этот импорт
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,7 @@ fun ChatScreen(
     firebaseToken: String,
     otherUserId: String,
     onLogout: () -> Unit,
+    onSwitchUser: () -> Unit,  // Добавляем колбэк для смены пользователя
     viewModel: ChatViewModel = viewModel()
 ) {
     // Устанавливаем токен при загрузке экрана
@@ -77,7 +79,6 @@ fun ChatScreen(
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             coroutineScope.launch {
-                // При reverseLayout = false прокручиваем к последнему элементу
                 listState.animateScrollToItem(messages.size - 1)
             }
         }
@@ -88,7 +89,18 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Чат")
+                        // Показываем текущего пользователя
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 2.dp)
+                        ) {
+                            Text(
+                                text = "Вы: ${getShortUid(firebaseToken)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                        Text("Чат с: ${getShortUid(otherUserId)}")
                         otherUserStatus?.let { user ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -119,9 +131,21 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    // Кнопка смены пользователя
+                    IconButton(
+                        onClick = onSwitchUser,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = "Сменить пользователя"
+                        )
+                    }
+
+                    // Кнопка выхода
                     IconButton(onClick = onLogout) {
                         Icon(
-                            imageVector = Icons.Default.ExitToApp,
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "Выйти"
                         )
                     }
@@ -168,7 +192,7 @@ fun ChatScreen(
                     else -> {
                         LazyColumn(
                             state = listState,
-                            reverseLayout = false,  // ← ИЗМЕНЕНО: false - новые сообщения внизу
+                            reverseLayout = false,
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(vertical = 8.dp)
                         ) {
@@ -182,7 +206,6 @@ fun ChatScreen(
                                 )
                             }
 
-                            // Небольшой отступ внизу для удобства прокрутки
                             item {
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
@@ -197,9 +220,8 @@ fun ChatScreen(
                 onTextChange = { viewModel.updateMessageText(it) },
                 onSendClick = {
                     viewModel.sendMessage()
-                    // Прокрутка вниз после отправки
                     coroutineScope.launch {
-                        delay(100) // Небольшая задержка для обновления списка
+                        delay(100)
                         if (messages.isNotEmpty()) {
                             listState.animateScrollToItem(messages.size)
                         }
@@ -208,6 +230,15 @@ fun ChatScreen(
                 isEnabled = !isLoading && error == null && firebaseToken.isNotEmpty()
             )
         }
+    }
+}
+
+// Вспомогательная функция для отображения короткого UID
+fun getShortUid(uid: String): String {
+    return when (uid) {
+        "test_user_123" -> "User_123"
+        "user_89892488093" -> "User_8093"
+        else -> if (uid.length > 10) uid.take(10) + "..." else uid
     }
 }
 
@@ -314,7 +345,6 @@ fun MessageInput(
     }
 }
 
-// ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ =====
 fun formatLastSeen(timestamp: String): String {
     return try {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
