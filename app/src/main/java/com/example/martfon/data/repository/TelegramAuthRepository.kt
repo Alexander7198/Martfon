@@ -14,9 +14,9 @@ class TelegramAuthRepository {
     private val gson = Gson()
 
     // Для эмулятора
-    private val baseUrl = "http://192.168.1.106:5001"  // IP из лога сервера!
+    //private val baseUrl = "http://192.168.1.106:5001"  // IP из лога сервера!
     // Для реального устройства в одной сети:
-    // private val baseUrl = "http://192.168.1.106:5001"
+    private val baseUrl = "http://192.168.1.106:5001"
     // Для продакшена:
     // private val baseUrl = "https://ваш-сервер.ру"
 

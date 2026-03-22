@@ -1,4 +1,4 @@
-package com.example.martfon.presentation.screens
+package com.example.martfon.domain.presentation.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -24,6 +24,7 @@ import androidx.compose.foundation.background
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +51,7 @@ fun ChatScreen(
     val error by viewModel.error.collectAsState()
 
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     // ===== СТАТУС =====
     LaunchedEffect(Unit) {
@@ -71,10 +73,13 @@ fun ChatScreen(
         }
     }
 
-    // Автоскролл
-    LaunchedEffect(messages) {
+    // Автоскролл к последнему сообщению (вниз)
+    LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(0)
+            coroutineScope.launch {
+                // При reverseLayout = false прокручиваем к последнему элементу
+                listState.animateScrollToItem(messages.size - 1)
+            }
         }
     }
 
@@ -163,8 +168,9 @@ fun ChatScreen(
                     else -> {
                         LazyColumn(
                             state = listState,
-                            reverseLayout = true,
-                            modifier = Modifier.fillMaxSize()
+                            reverseLayout = false,  // ← ИЗМЕНЕНО: false - новые сообщения внизу
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(vertical = 8.dp)
                         ) {
                             items(
                                 items = messages,
@@ -175,6 +181,11 @@ fun ChatScreen(
                                     modifier = Modifier.animateItemPlacement()
                                 )
                             }
+
+                            // Небольшой отступ внизу для удобства прокрутки
+                            item {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
@@ -184,14 +195,21 @@ fun ChatScreen(
             MessageInput(
                 newMessageText = newMessageText,
                 onTextChange = { viewModel.updateMessageText(it) },
-                onSendClick = { viewModel.sendMessage() },
+                onSendClick = {
+                    viewModel.sendMessage()
+                    // Прокрутка вниз после отправки
+                    coroutineScope.launch {
+                        delay(100) // Небольшая задержка для обновления списка
+                        if (messages.isNotEmpty()) {
+                            listState.animateScrollToItem(messages.size)
+                        }
+                    }
+                },
                 isEnabled = !isLoading && error == null && firebaseToken.isNotEmpty()
             )
         }
     }
 }
-
-// ⬇️ MessageBubble и MessageInput остаются без изменений ⬇️
 
 @Composable
 fun MessageBubble(
