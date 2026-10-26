@@ -69,4 +69,11 @@ interface MessageApi {
     suspend fun getUserStatus(
         @Path("userId") userId: String
     ): Response<UserDto>
+
+    @POST("api/messages/read")
+    suspend fun markAsRead(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, String>
+    ): Response<Unit>
 }
+

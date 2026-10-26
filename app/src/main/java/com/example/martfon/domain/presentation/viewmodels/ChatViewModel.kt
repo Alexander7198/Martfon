@@ -156,7 +156,8 @@ class ChatViewModel : ViewModel() {
             text = this.content ?: "",
             senderId = this.sender_firebase_uid ?: "unknown",
             timestamp = parseTimestamp(this.created_at),
-            isSentByMe = this.sender_firebase_uid == "test_user_123"
+            isSentByMe = this.sender_firebase_uid == "test_user_123",
+            isRead = this.is_read ?: false
         )
     }
 
@@ -172,4 +173,32 @@ class ChatViewModel : ViewModel() {
             System.currentTimeMillis()
         }
     }
+
+
+    // ===== ПРОЧИТАНЫ СООБЩЕНИЯ ИЛИ НЕТ =====
+    fun markMessagesAsRead() {
+        val token = authToken ?: return
+
+        // В вашем классе переменная называется currentChatId
+        val chatIdToRead = currentChatId
+
+        // Если вдруг ID пустой, не отправляем
+        if (chatIdToRead.isBlank()) return
+
+        viewModelScope.launch {
+            try {
+                // Явно указываем тип Map<String, String>, чтобы компилятор не ругался
+                val body: Map<String, String> = mapOf("chatId" to chatIdToRead)
+
+                // В вашем классе API называется apiService
+                apiService.markAsRead("Bearer $token", body)
+
+                // Обновляем сообщения, чтобы галочки сразу загорелись
+                refreshMessages()
+            } catch (e: Exception) {
+                println("Ошибка отметки прочтения: ${e.message}")
+            }
+        }
+    }
+
 }

@@ -14,7 +14,7 @@ class MessageRepository {
     private val gson = Gson()
 
     // URL вашего Python сервера (чат-сервера, не Telegram бота!)
-    private val baseUrl = "http://192.168.1.106:8080"  // IP вашего сервера
+    private val baseUrl = "http://192.168.0.11:8080"  // IP вашего сервера
 
     private var authToken: String? = null
 
@@ -29,7 +29,8 @@ class MessageRepository {
         val chat_id: String,
         val sender_firebase_uid: String?,
         val content: String?,
-        val created_at: String?
+        val created_at: String?,
+        val is_read: Boolean? = false
     )
 
     fun setToken(token: String) {

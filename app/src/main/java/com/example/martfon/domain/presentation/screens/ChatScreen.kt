@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -80,6 +81,9 @@ fun ChatScreen(
         if (messages.isNotEmpty()) {
             coroutineScope.launch {
                 listState.animateScrollToItem(messages.size - 1)
+
+                // Отмечаем как прочитанные
+                viewModel.markMessagesAsRead()
             }
         }
     }
@@ -255,18 +259,12 @@ fun MessageBubble(
         MaterialTheme.colorScheme.secondaryContainer
     }
 
-    val alignment = if (isSentByMe) {
-        Alignment.CenterEnd
-    } else {
-        Alignment.CenterStart
-    }
+    val alignment = if (isSentByMe) Alignment.CenterEnd else Alignment.CenterStart
 
     val timeText = remember(message.timestamp) {
         try {
             SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp))
-        } catch (_: Exception) {
-            ""
-        }
+        } catch (_: Exception) { "" }
     }
 
     Box(
@@ -279,19 +277,43 @@ fun MessageBubble(
             colors = CardDefaults.cardColors(containerColor = bubbleColor),
             shape = MaterialTheme.shapes.medium
         ) {
-            Column(
-                modifier = Modifier.padding(12.dp)
-            ) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
                     text = message.text,
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Text(
-                    text = timeText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+
+                // Нижняя строка с временем и галочками
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = timeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Показываем галочки только для СВОИХ сообщений
+                    if (isSentByMe) {
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        val (icon, color) = if (message.isRead) {
+                            "✓✓" to Color(0xFF34B7F1) // Синий цвет (прочитано)
+                        } else {
+                            "✓" to MaterialTheme.colorScheme.onSurfaceVariant // Серый (отправлено)
+                        }
+
+                        Text(
+                            text = icon,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = color,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }
@@ -366,3 +388,4 @@ fun formatLastSeen(timestamp: String): String {
         "давно"
     }
 }
+
