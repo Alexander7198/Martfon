@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "728208176021",
+    "project_id": "martfon-996a8",
+    "storage_bucket": "martfon-996a8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:728208176021:android:aef467f38d140d6f813c9c",
+        "android_client_info": {
+          "package_name": "com.example.martfon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC96DQPLPGxR-zCwyCyoFoHDMpoiyNTp-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,13 +4,18 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
+}
+
+configurations {
+    implementation {
+        exclude(group = "org.jetbrains", module = "annotations")
+    }
 }
 
 android {
     namespace = "com.example.martfon"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.martfon"
@@ -31,13 +36,15 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlin { // <-- Новый блок kotlin на верхнем уровне
+
+    kotlin {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11) // <-- Переносим сюда
+            jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 
@@ -46,45 +53,53 @@ android {
     }
 }
 
-// app/build.gradle.kts
 dependencies {
     // Основные зависимости Android
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0")
     implementation("androidx.activity:activity-compose:1.8.0")
 
-    // Jetpack Compose для UI
-    implementation(platform("androidx.compose:compose-bom:2023.10.01"))
+    // Jetpack Compose - обновленная версия BOM
+    implementation(platform("androidx.compose:compose-bom:2024.02.00"))  // ← ОБНОВЛЕНО
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // Для ViewModel в Compose
-    implementation("androidx.navigation:navigation-compose:2.7.7") // Для навигации между экранами
+    implementation("androidx.compose.material:material-icons-extended")  // ← БЕЗ ВЕРСИИ (берется из BOM)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 
-    // База данных Room (для локального хранения сообщений)
+    // Для отладки
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // База данных Room
     implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1") // Поддержка Kotlin coroutines
-    ksp("androidx.room:room-compiler:2.6.1") // Обработка аннотаций Room (нужен плагин KSP)
+    implementation("androidx.room:room-ktx:2.6.1")
+    implementation("androidx.room:room-compiler:2.6.1")
 
-    // Сеть (пока для простоты, позже заменим на ваш протокол)
+    // Сеть
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-
-    // Kotlin Coroutines для асинхронных операций
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
-
-    // Для загрузки изображений (опционально, для аватарок)
-    implementation("io.coil-kt:coil-compose:2.5.0")
-
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-
-    // Retrofit с Gson
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
+    // Kotlin Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+
+    // Coil для изображений
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    // AndroidX
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
+    implementation("com.google.android.material:material:1.12.0")
+
+    // DataStore для хранения токена
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 }
-
-private fun DependencyHandlerScope.ksp(string: String) {}
-
-private fun String.set(jvm11: JvmTarget) {}

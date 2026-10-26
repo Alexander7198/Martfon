@@ -1,3 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Martfon</string>
+
+    <!-- Chat Screen -->
+    <string name="message_hint">Введите сообщение…</string>
+    <string name="send_button">Отправить</string>
+
+
+    <string name="error_general">Произошла ошибка</string>
+    <string name="retry">Повторить</string>
+    <string name="loading">Загрузка…</string>
 </resources>
